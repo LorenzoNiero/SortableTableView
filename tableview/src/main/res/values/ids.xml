@@ -2,4 +2,5 @@
 <resources>
     <item name="table_data_view" type="id"/>
     <item name="table_header_view" type="id"/>
+    <item name="table_footer_view" type="id"/>
 </resources>

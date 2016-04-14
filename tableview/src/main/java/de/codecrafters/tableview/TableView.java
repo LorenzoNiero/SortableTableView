@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -29,10 +30,9 @@ import de.codecrafters.tableview.toolkit.TableDataRowColorizers;
  *
  * @author ISchwarz
  */
-public class TableView<T> extends LinearLayout implements TableDataAdapterRecycler.OnItemClickListener
+public class TableView<T> extends RelativeLayout implements TableDataAdapter.OnItemClickListener
 {
-
-    private static final String LOG_TAG = MyTableView.class.getName();
+    private static final String LOG_TAG = TableView.class.getName();
 
     private static final int ID_DATA_VIEW = 101010;
 
@@ -43,13 +43,11 @@ public class TableView<T> extends LinearLayout implements TableDataAdapterRecycl
     private final Set<TableDataClickListener<T>> dataClickListeners = new HashSet<>();
     private TableColumnModel columnModel;
 
-    private TableHeaderView tableHeaderView;
-    private RecyclerView tableDataView;
-
-    //private RecyclerView dlkdd;
+    protected TableHeaderView tableHeaderView;
+    protected RecyclerView tableDataView;
 
     private TableHeaderAdapter tableHeaderAdapter;
-    protected TableDataAdapterRecycler<T> tableDataAdapter;
+    protected TableDataAdapter<T> tableDataAdapter;
 
     private TableDataRowColorizer<? super T> dataRowColoriser = TableDataRowColorizers.similarRowColor(0x00000000);
 
@@ -93,7 +91,7 @@ public class TableView<T> extends LinearLayout implements TableDataAdapterRecycl
      */
     public TableView(final Context context, final AttributeSet attributes, final int styleAttributes) {
         super(context, attributes, styleAttributes);
-        setOrientation(LinearLayout.VERTICAL);
+        //setOrientation(LinearLayout.VERTICAL);
         setAttributes(attributes);
         setupTableHeaderView();
         setupTableDataView(attributes, styleAttributes);
@@ -118,6 +116,12 @@ public class TableView<T> extends LinearLayout implements TableDataAdapterRecycl
 
         addView(tableHeaderView, 0);
         setHeaderElevation(headerElevation);
+
+        //set position in relativeLayout
+        RelativeLayout.LayoutParams layoutParamsRelative =
+                (RelativeLayout.LayoutParams)tableHeaderView.getLayoutParams();
+        layoutParamsRelative.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+        tableHeaderView.setLayoutParams(layoutParamsRelative);
 
         forceRefresh();
     }
@@ -224,7 +228,7 @@ public class TableView<T> extends LinearLayout implements TableDataAdapterRecycl
      * @param dataAdapter
      *         The {@link TableDataAdapter} that should be set.
      */
-    public void setDataAdapter(final TableDataAdapterRecycler<T> dataAdapter) {
+    public void setDataAdapter(final TableDataAdapter<T> dataAdapter) {
         tableDataAdapter = dataAdapter;
         tableDataAdapter.setColumnModel(columnModel);
         tableDataAdapter.setRowColoriser(dataRowColoriser);
@@ -326,9 +330,6 @@ public class TableView<T> extends LinearLayout implements TableDataAdapterRecycl
         tableDataAdapter.setRowColoriser(dataRowColoriser);
 
         tableDataView = new RecyclerView( getContext() , attributes, styleAttributes);
-        //tableDataView.addOnItemTouchListener(new InternalDataClickListener2());
-        //tableDataView.setOnItemClickListener(new InternalDataClickListener2());
-
 
         tableDataView.setLayoutParams(dataViewLayoutParams);
 
@@ -347,7 +348,13 @@ public class TableView<T> extends LinearLayout implements TableDataAdapterRecycl
 
         tableDataView.setAdapter(tableDataAdapter);
 
+        RelativeLayout.LayoutParams layoutParamsRelative =
+                (RelativeLayout.LayoutParams)tableDataView.getLayoutParams();
+        layoutParamsRelative.addRule(RelativeLayout.BELOW, R.id.table_header_view);
+        tableDataView.setLayoutParams(layoutParamsRelative);
+
     }
+
 
     @Override
     public void onItemClick(View view, int positionIndex) {
@@ -397,7 +404,7 @@ public class TableView<T> extends LinearLayout implements TableDataAdapterRecycl
      * @author ISchwarz
      * @author lz91
      */
-    private class DefaultTableDataAdapter extends TableDataAdapterRecycler<T> {
+    private class DefaultTableDataAdapter extends TableDataAdapter<T> {
 
         public DefaultTableDataAdapter(final Context context) {
             super(context, columnModel, new ArrayList<T>());
@@ -441,7 +448,7 @@ public class TableView<T> extends LinearLayout implements TableDataAdapterRecycl
      *
      * @author ISchwarz
      */
-    private class EditModeTableDataAdapter extends TableDataAdapterRecycler<T> {
+    private class EditModeTableDataAdapter extends TableDataAdapter<T> {
 
         private static final float TEXT_SIZE = 16;
 

@@ -69,21 +69,15 @@ public class ViewHolderTextView extends ViewHolderBase<Car>
     }
 
     @Override
-    public View bindCell(Car item, int columnIndex) {
+    public void bindCell(Car item, int columnIndex) {
 
-        //textView.setText("test");
-        switch (columnIndex){
-            case 0:
                 iconLogo.setImageResource(item.getProducer().getLogo());
-                break;
-            case 1:
+
                 nameTextView.setText(item.getName());
-                break;
-            case 2:
+
                 kWTextView.setText(item.getKw() + " kW");
                 psTextView.setText(item.getPs() + " PS");
-                break;
-            case 3:
+
                 String priceString = PRICE_FORMATTER.format(item.getPrice()) + " €";
 
                 priceTextView.setText(priceString);
@@ -93,11 +87,6 @@ public class ViewHolderTextView extends ViewHolderBase<Car>
                     priceTextView.setTextColor(0xFFC62828);
                 }
 
-                break;
-
-        }
-
-        return null;
     }
 
 
@@ -141,36 +130,3 @@ public class ViewHolderTextView extends ViewHolderBase<Car>
 
 
 }
-
-
-
-
-
-/*+
-    // Provide a reference to the views for each data item
-    // Complex data items may need more than one view per item, and
-    // you provide access to all the views for a data item in a view holder
-    public class ViewHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
-        public TextView txtHeader;
-        public TextView txtFooter;
-
-        public ViewHolder(View v) {
-            super(v);
-            txtHeader = (TextView) v.findViewById(R.id.firstLine);
-            txtFooter = (TextView) v.findViewById(R.id.secondLine);
-        }
-    }
-
-    public void add(int position, String item) {
-        mDataset.add(position, item);
-        notifyItemInserted(position);
-    }
-
-    public void remove(String item) {
-        int position = mDataset.indexOf(item);
-        mDataset.remove(position);
-        notifyItemRemoved(position);
-    }
-
- */

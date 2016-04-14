@@ -26,17 +26,18 @@ public abstract class ViewHolderBase<T> extends RecyclerView.ViewHolder
 
     }
 
-    //create column
+    //create view column and save references view
     public abstract View initCell(int columnIndex);
 
     //set value on view
-    public abstract View bindCell(T item, int columnIndex);
+    public abstract void bindCell(T item, int columnIndex);
 
 
     public int getWidthUnit(){
         return widthUnit;
     }
 
+    //set listener item click
     public void setmItemClickListener(final TableDataAdapter.OnItemClickListener mItemClickListener) {
 
         viewContainer.setOnClickListener(new View.OnClickListener() {
@@ -52,6 +53,7 @@ public abstract class ViewHolderBase<T> extends RecyclerView.ViewHolder
         });
     }
 
+    //set color background row
     public void setBackgroundColor(@ColorInt int idColore){
         viewContainer.setBackgroundColor(idColore);
     }

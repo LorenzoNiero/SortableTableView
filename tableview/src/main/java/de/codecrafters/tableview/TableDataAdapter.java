@@ -28,10 +28,10 @@ import static android.widget.LinearLayout.LayoutParams;
  * @author ISchwarz, lz91
  */
 public abstract class TableDataAdapter<T> extends  RecyclerView.Adapter<ViewHolderBase> {
-    private static final String LOG_TAG = TableDataAdapterRecycler.class.getName();
+    private static final String LOG_TAG = TableDataAdapter.class.getName();
 
     private TableColumnModel columnModel;
-    private final List<T> data;
+    private List<T> data;
     Context context;
     private TableDataRowColorizer<? super T> rowColoriser;
     private OnItemClickListener mItemClickListener;
@@ -64,17 +64,15 @@ public abstract class TableDataAdapter<T> extends  RecyclerView.Adapter<ViewHold
             int viewType) {
 
         // create a new view
-        //View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.rowlayout, parent, false);
         // set the view's size, margins, paddings and layout parameters
         final LinearLayout rowView = new LinearLayout(getContext());
 
         final AbsListView.LayoutParams rowLayoutParams = new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
         rowView.setLayoutParams(rowLayoutParams);
         rowView.setGravity(Gravity.CENTER_VERTICAL);
-        rowView.setClickable(true);
+        //rowView.setClickable(true);
 
         final int widthUnit = (parent.getWidth() / columnModel.getColumnWeightSum());
-        //H vh = new ViewHolder(v);
         ViewHolderBase vh = getHolder(rowView, parent, widthUnit);
 
         for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {
@@ -97,8 +95,6 @@ public abstract class TableDataAdapter<T> extends  RecyclerView.Adapter<ViewHold
     }
 
 
-    protected abstract ViewHolderBase getHolder(LinearLayout v, ViewGroup parent, int widthUnit);
-
     // Replace the contents of a view (invoked by the layout manager)
     @Override
     public void onBindViewHolder(ViewHolderBase holder, int rowIndex) {
@@ -111,22 +107,17 @@ public abstract class TableDataAdapter<T> extends  RecyclerView.Adapter<ViewHold
             Log.w(LOG_TAG, "No row date available for row with index " + rowIndex + ". " +
                     "Caught Exception: " + e.getMessage());
         }
+
         holder.setBackgroundColor(rowColoriser.getRowColor(rowIndex, rowData));
 
-        //final int widthUnit = holder.getWidthUnit();
         holder.setmItemClickListener( mItemClickListener);
 
-        for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {
-            View cellView = holder.bindCell(rowData, columnIndex);
-            if (cellView == null) {
-                cellView = new TextView(getContext());
-            }
-
-        }
-
-
+        holder.bindCell(rowData, 0);
 
     }
+
+
+    protected abstract ViewHolderBase getHolder(LinearLayout v, ViewGroup parent, int widthUnit);
 
     public T getItem(int position){
         return data.get(position);
@@ -291,6 +282,11 @@ public abstract class TableDataAdapter<T> extends  RecyclerView.Adapter<ViewHold
         int position = data.indexOf(item);
         data.remove(position);
         notifyItemRemoved(position);
+    }
+
+    public void setList(List<T> list){
+        data = list;
+        notifyDataSetChanged();
     }
 
     public OnItemClickListener getItemClickListener() {

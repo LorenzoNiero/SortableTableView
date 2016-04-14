@@ -6,7 +6,8 @@ import android.widget.Toast;
 
 import java.util.Comparator;
 
-import de.codecrafters.tableview.MySortableTableView;
+
+import de.codecrafters.tableview.SortableTablePagingView;
 import de.codecrafters.tableview.SortableTableView;
 import de.codecrafters.tableview.listeners.TableDataClickListener;
 import de.codecrafters.tableview.toolkit.SimpleTableHeaderAdapter;
@@ -15,7 +16,7 @@ import de.codecrafters.tableview.toolkit.TableDataRowColorizers;
 import de.codecrafters.tableviewexample.data.Car;
 
 
-public class SortableCarTableView extends SortableTableView<Car> {
+public class SortableCarTableView extends SortableTablePagingView<Car> {
 
 
     public SortableCarTableView(Context context) {
@@ -30,7 +31,7 @@ public class SortableCarTableView extends SortableTableView<Car> {
         super(context, attributes, styleAttributes);
 
 
-        SimpleTableHeaderAdapter simpleTableHeaderAdapter = new SimpleTableHeaderAdapter(context, "Logo", "Name", "Power", "Price", " -edkod", "ciao");
+        SimpleTableHeaderAdapter simpleTableHeaderAdapter = new SimpleTableHeaderAdapter(context, "Logo", "Name", "Power", "Price");
         simpleTableHeaderAdapter.setTextColor(context.getResources().getColor(R.color.table_header_text));
         setHeaderAdapter(simpleTableHeaderAdapter);
 

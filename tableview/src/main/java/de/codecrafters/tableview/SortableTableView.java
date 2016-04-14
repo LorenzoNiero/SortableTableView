@@ -20,7 +20,7 @@ import de.codecrafters.tableview.providers.SortStateViewProvider;
 /**
  * Extension of the {@link TableView} that gives the possibility to sort the table by every single
  * column. For this purpose implementations of {@link Comparator} are used. If there is a comparator
- * set for a column the {@link MySortableTableView} will automatically display an ImageView at the start
+ * set for a column the {@link SortableTableView} will automatically display an ImageView at the start
  * of the header indicating to the user, that this column is sortable.
  * If the user clicks this header the given comparator will used to sort the table ascending by the
  * content of this column. If the user clicks this header again, the table is sorted descending
@@ -33,7 +33,7 @@ public class SortableTableView<T> extends TableView<T> {
     public static final String SAVED_STATE_SUPER_STATE = "SAVED_STATE_SUPER";
     public static final String SAVED_STATE_SORTED_DIRECTION = "SAVED_STATE_SORTED_DIRECTION";
     public static final String SAVED_STATE_SORTED_COLUMN = "SAVED_STATE_SORTED_COLUMN";
-    private static final String LOG_TAG = MySortableTableView.class.getName();
+    private static final String LOG_TAG = SortableTableView.class.getName();
     private final SortableTableHeaderView sortableTableHeaderView;
     private final SortingController sortingController;
 
@@ -84,7 +84,7 @@ public class SortableTableView<T> extends TableView<T> {
     }
 
     @Override
-    public void setDataAdapter(final TableDataAdapterRecycler<T> dataAdapter) {
+    public void setDataAdapter(final TableDataAdapter<T> dataAdapter) {
         dataAdapter.registerAdapterDataObserver(new RecapSortingDataSetObserver());
         //dataAdapter.registerDataSetObserver(new RecapSortingDataSetObserver());
         super.setDataAdapter(dataAdapter);

@@ -30,9 +30,9 @@ public class ViewHolderTextViewTest<T> extends ViewHolderBase<T>
     }
 
     @Override
-    public View bindCell(T item, int columnIndex) {
+    public void bindCell(T item, int columnIndex) {
         textView.setText(" test ");
-        return textView;
+
     }
 
 

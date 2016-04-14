@@ -12,12 +12,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.codecrafters.tableview.TableDataAdapter;
-import de.codecrafters.tableview.TableDataAdapterRecycler;
 import de.codecrafters.tableview.ViewHolderBase;
 import de.codecrafters.tableviewexample.data.Car;
 
 
-public class CarTableDataAdapter extends TableDataAdapterRecycler<Car> {
+public class CarTableDataAdapter extends TableDataAdapter<Car> {
 
 
     public CarTableDataAdapter(Context context, List<Car> myDataset) {
@@ -27,7 +26,7 @@ public class CarTableDataAdapter extends TableDataAdapterRecycler<Car> {
 
     @Override
     protected ViewHolderBase getHolder(LinearLayout v, ViewGroup parent, int widthUnit) {
-return new ViewHolderTextView(getContext(),v, parent, widthUnit, getColumnCount(), getColumnModel());
+        return new ViewHolderTextView(getContext(),v, parent, widthUnit, getColumnCount(), getColumnModel());
     }
 
 
