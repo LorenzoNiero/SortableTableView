@@ -6,11 +6,14 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.List;
 
 import de.codecrafters.tableview.TableDataAdapter;
+import de.codecrafters.tableview.ViewHolderBase;
+import de.codecrafters.tableview.ViewHolderTextViewTest;
 
 /**
  * A simple {@link TableDataAdapter} that allows to display 2D-String-Arrays in a {@link de.codecrafters.tableview.TableView}.
@@ -34,10 +37,17 @@ public final class SimpleTableDataAdapter extends TableDataAdapter<String[]> {
         super(context, data);
     }
 
+    @Override
+    protected ViewHolderBase getHolder(LinearLayout v, ViewGroup parent, int widthUnit) {
+        return new ViewHolderTextViewTest(getContext(), v);
+    }
+
     public SimpleTableDataAdapter(final Context context, final List<String[]> data) {
         super(context, data);
     }
 
+
+    /*
     @Override
     public View getCellView(final int rowIndex, final int columnIndex, final ViewGroup parentView) {
         final TextView textView = new TextView(getContext());
@@ -59,6 +69,8 @@ public final class SimpleTableDataAdapter extends TableDataAdapter<String[]> {
 
         return textView;
     }
+    */
+
 
     /**
      * Sets the padding that will be used for all table cells.

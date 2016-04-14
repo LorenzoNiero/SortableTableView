@@ -6,6 +6,7 @@ import android.widget.Toast;
 
 import java.util.Comparator;
 
+import de.codecrafters.tableview.MySortableTableView;
 import de.codecrafters.tableview.SortableTableView;
 import de.codecrafters.tableview.listeners.TableDataClickListener;
 import de.codecrafters.tableview.toolkit.SimpleTableHeaderAdapter;
@@ -29,7 +30,7 @@ public class SortableCarTableView extends SortableTableView<Car> {
         super(context, attributes, styleAttributes);
 
 
-        SimpleTableHeaderAdapter simpleTableHeaderAdapter = new SimpleTableHeaderAdapter(context, "Hersteller", "Bezeichung", "Leistung", "Preis");
+        SimpleTableHeaderAdapter simpleTableHeaderAdapter = new SimpleTableHeaderAdapter(context, "Logo", "Name", "Power", "Price", " -edkod", "ciao");
         simpleTableHeaderAdapter.setTextColor(context.getResources().getColor(R.color.table_header_text));
         setHeaderAdapter(simpleTableHeaderAdapter);
 
@@ -42,8 +43,9 @@ public class SortableCarTableView extends SortableTableView<Car> {
         setColumnWeight(1, 3);
         setColumnWeight(2, 3);
         setColumnWeight(3, 2);
+        setColumnWeight(4, 2);
 
-        setColumnComparator(0, CarComparators.getCarProducerComparator());
+        //setColumnComparator(0, CarComparators.getCarProducerComparator());
         setColumnComparator(1, CarComparators.getCarNameComparator());
         setColumnComparator(2, CarComparators.getCarPowerComparator());
         setColumnComparator(3, CarComparators.getCarPriceComparator());

@@ -4,13 +4,13 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Typeface;
 import android.support.v4.view.ViewCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -29,9 +29,10 @@ import de.codecrafters.tableview.toolkit.TableDataRowColorizers;
  *
  * @author ISchwarz
  */
-public class TableView<T> extends LinearLayout {
+public class TableView<T> extends LinearLayout implements TableDataAdapterRecycler.OnItemClickListener
+{
 
-    private static final String LOG_TAG = TableView.class.getName();
+    private static final String LOG_TAG = MyTableView.class.getName();
 
     private static final int ID_DATA_VIEW = 101010;
 
@@ -43,10 +44,12 @@ public class TableView<T> extends LinearLayout {
     private TableColumnModel columnModel;
 
     private TableHeaderView tableHeaderView;
-    private ListView tableDataView;
+    private RecyclerView tableDataView;
+
+    //private RecyclerView dlkdd;
 
     private TableHeaderAdapter tableHeaderAdapter;
-    protected TableDataAdapter<T> tableDataAdapter;
+    protected TableDataAdapterRecycler<T> tableDataAdapter;
 
     private TableDataRowColorizer<? super T> dataRowColoriser = TableDataRowColorizers.similarRowColor(0x00000000);
 
@@ -221,10 +224,11 @@ public class TableView<T> extends LinearLayout {
      * @param dataAdapter
      *         The {@link TableDataAdapter} that should be set.
      */
-    public void setDataAdapter(final TableDataAdapter<T> dataAdapter) {
+    public void setDataAdapter(final TableDataAdapterRecycler<T> dataAdapter) {
         tableDataAdapter = dataAdapter;
         tableDataAdapter.setColumnModel(columnModel);
         tableDataAdapter.setRowColoriser(dataRowColoriser);
+        tableDataAdapter.setItemClickListener(this); //listener click item
         tableDataView.setAdapter(tableDataAdapter);
         forceRefresh();
     }
@@ -321,42 +325,49 @@ public class TableView<T> extends LinearLayout {
         }
         tableDataAdapter.setRowColoriser(dataRowColoriser);
 
-        tableDataView = new ListView(getContext(), attributes, styleAttributes);
-        tableDataView.setOnItemClickListener(new InternalDataClickListener());
+        tableDataView = new RecyclerView( getContext() , attributes, styleAttributes);
+        //tableDataView.addOnItemTouchListener(new InternalDataClickListener2());
+        //tableDataView.setOnItemClickListener(new InternalDataClickListener2());
+
+
         tableDataView.setLayoutParams(dataViewLayoutParams);
-        tableDataView.setAdapter(tableDataAdapter);
+
         tableDataView.setId(R.id.table_data_view);
 
+        LinearLayoutManager mLinearLayoutManager = new LinearLayoutManager(getContext());
+
+        //mLinearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        tableDataView.setLayoutManager(mLinearLayoutManager);
+
+        int scrollPosition = ((LinearLayoutManager) tableDataView.getLayoutManager())
+                .findFirstCompletelyVisibleItemPosition();
+        tableDataView.scrollToPosition(0);
+
         addView(tableDataView);
+
+        tableDataView.setAdapter(tableDataAdapter);
+
     }
 
+    @Override
+    public void onItemClick(View view, int positionIndex) {
+        informAllListeners(positionIndex);
+    }
 
-    /**
-     * Internal management of clicks on the data view.
-     *
-     * @author ISchwarz
-     */
-    private class InternalDataClickListener implements AdapterView.OnItemClickListener {
+    private void informAllListeners(final int rowIndex) {
+        final T clickedObject = tableDataAdapter.getItem(rowIndex);
 
-        @Override
-        public void onItemClick(final AdapterView<?> adapterView, final View view, final int i, final long l) {
-            informAllListeners(i);
-        }
-
-        private void informAllListeners(final int rowIndex) {
-            final T clickedObject = tableDataAdapter.getItem(rowIndex);
-
-            for (final TableDataClickListener<T> listener : dataClickListeners) {
-                try {
-                    listener.onDataClicked(rowIndex, clickedObject);
-                } catch (final Throwable t) {
-                    Log.w(LOG_TAG, "Caught Throwable on listener notification: " + t.toString());
-                    // continue calling listeners
-                }
+        for (final TableDataClickListener<T> listener : dataClickListeners) {
+            try {
+                listener.onDataClicked(rowIndex, clickedObject);
+            } catch (final Throwable t) {
+                Log.w(LOG_TAG, "Caught Throwable on listener notification: " + t.toString());
+                // continue calling listeners
             }
         }
-
     }
+
+
 
     /**
      * The {@link TableHeaderAdapter} that is used by default. It contains the column model of the
@@ -384,16 +395,18 @@ public class TableView<T> extends LinearLayout {
      * table but no data.
      *
      * @author ISchwarz
+     * @author lz91
      */
-    private class DefaultTableDataAdapter extends TableDataAdapter<T> {
+    private class DefaultTableDataAdapter extends TableDataAdapterRecycler<T> {
 
         public DefaultTableDataAdapter(final Context context) {
             super(context, columnModel, new ArrayList<T>());
         }
 
+
         @Override
-        public View getCellView(final int rowIndex, final int columnIndex, final ViewGroup parentView) {
-            return new TextView(getContext());
+        protected ViewHolderBase getHolder(LinearLayout v, ViewGroup parent, int widthUnit) {
+            return new ViewHolderTextViewTest<T>(getContext(), v);
         }
     }
 
@@ -401,6 +414,7 @@ public class TableView<T> extends LinearLayout {
      * The {@link TableHeaderAdapter} that is used while the view is in edit mode.
      *
      * @author ISchwarz
+     * @author lz91
      */
     private class EditModeTableHeaderAdapter extends TableHeaderAdapter {
 
@@ -427,7 +441,7 @@ public class TableView<T> extends LinearLayout {
      *
      * @author ISchwarz
      */
-    private class EditModeTableDataAdapter extends TableDataAdapter<T> {
+    private class EditModeTableDataAdapter extends TableDataAdapterRecycler<T> {
 
         private static final float TEXT_SIZE = 16;
 
@@ -436,16 +450,13 @@ public class TableView<T> extends LinearLayout {
         }
 
         @Override
-        public View getCellView(final int rowIndex, final int columnIndex, final ViewGroup parent) {
-            final TextView textView = new TextView(getContext());
-            textView.setText(getResources().getString(R.string.default_cell, columnIndex, rowIndex));
-            textView.setPadding(20, 10, 20, 10);
-            textView.setTextSize(TEXT_SIZE);
-            return textView;
+        protected ViewHolderBase getHolder(LinearLayout v, ViewGroup parent, int widthUnit) {
+            return new ViewHolderTextViewTest<T>(getContext(), v);
         }
 
+
         @Override
-        public int getCount() {
+        public int getItemCount() {
             return 50;
         }
     }

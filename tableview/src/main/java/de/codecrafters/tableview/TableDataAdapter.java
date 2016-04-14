@@ -1,9 +1,8 @@
 package de.codecrafters.tableview;
 
-import static android.widget.LinearLayout.LayoutParams;
-
 import android.content.Context;
 import android.content.res.Resources;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -20,65 +19,123 @@ import java.util.List;
 
 import de.codecrafters.tableview.colorizers.TableDataRowColorizer;
 
+import static android.widget.LinearLayout.LayoutParams;
+
 
 /**
  * The abstract implementation of an adapter used to bring data to a {@link TableView}.
  *
- * @author ISchwarz
+ * @author ISchwarz, lz91
  */
-public abstract class TableDataAdapter<T> extends ArrayAdapter<T> {
-
-    private static final String LOG_TAG = TableDataAdapter.class.getName();
+public abstract class TableDataAdapter<T> extends  RecyclerView.Adapter<ViewHolderBase> {
+    private static final String LOG_TAG = TableDataAdapterRecycler.class.getName();
 
     private TableColumnModel columnModel;
     private final List<T> data;
+    Context context;
     private TableDataRowColorizer<? super T> rowColoriser;
+    private OnItemClickListener mItemClickListener;
 
 
-    /**
-     * Creates a new TableDataAdapter.
-     *
-     * @param context
-     *         The context that shall be used.
-     */
-    public TableDataAdapter(final Context context, final T[] data) {
-        this(context, 0, new ArrayList<>(Arrays.asList(data)));
+    // Provide a suitable constructor (depends on the kind of dataset)
+    public TableDataAdapter(Context context, final List<T> myDataset) {
+        this (context,0, myDataset);
     }
 
-    /**
-     * Creates a new TableDataAdapter.
-     *
-     * @param context
-     *         The context that shall be used.
-     */
-    public TableDataAdapter(final Context context, final List<T> data) {
-        this(context, 0, data);
+
+    public TableDataAdapter(Context context, final T[] data) {
+        this(context, 0,  new ArrayList<>(Arrays.asList(data)));
     }
 
-    /**
-     * Creates a new TableDataAdapter. (internally used)
-     *
-     * @param context
-     *         The context that shall be used.
-     * @param columnCount
-     *         The number of columns.
-     */
-    protected TableDataAdapter(final Context context, final int columnCount, final List<T> data) {
-        this(context, new TableColumnModel(columnCount), data);
+    protected TableDataAdapter(Context context, final int columnCount, final List<T> data) {
+        this( context, new TableColumnModel(columnCount), data);
     }
 
-    /**
-     * Creates a new TableDataAdapter. (internally used)
-     *
-     * @param context
-     *         The context that shall be used.
-     * @param columnModel
-     *         The column model to be used.
-     */
-    protected TableDataAdapter(final Context context, final TableColumnModel columnModel, final List<T> data) {
-        super(context, -1, data);
+    protected TableDataAdapter(Context context,  final TableColumnModel columnModel, final List<T> data) {
+        this.context = context;
         this.columnModel = columnModel;
         this.data = data;
+    }
+
+    // Create new views (invoked by the layout manager)
+    @Override
+    public ViewHolderBase onCreateViewHolder(
+            ViewGroup parent,
+            int viewType) {
+
+        // create a new view
+        //View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.rowlayout, parent, false);
+        // set the view's size, margins, paddings and layout parameters
+        final LinearLayout rowView = new LinearLayout(getContext());
+
+        final AbsListView.LayoutParams rowLayoutParams = new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        rowView.setLayoutParams(rowLayoutParams);
+        rowView.setGravity(Gravity.CENTER_VERTICAL);
+        rowView.setClickable(true);
+
+        final int widthUnit = (parent.getWidth() / columnModel.getColumnWeightSum());
+        //H vh = new ViewHolder(v);
+        ViewHolderBase vh = getHolder(rowView, parent, widthUnit);
+
+        for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {
+            View cellView = vh.initCell( columnIndex);
+            if (cellView == null) {
+                cellView = new TextView(getContext());
+            }
+
+            final int width = widthUnit * columnModel.getColumnWeight(columnIndex);
+
+            final LinearLayout.LayoutParams cellLayoutParams = new LinearLayout.LayoutParams(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+            cellLayoutParams.weight = columnModel.getColumnWeight(columnIndex);
+            cellView.setLayoutParams(cellLayoutParams);
+            rowView.addView(cellView);
+        }
+
+        return vh;
+
+
+    }
+
+
+    protected abstract ViewHolderBase getHolder(LinearLayout v, ViewGroup parent, int widthUnit);
+
+    // Replace the contents of a view (invoked by the layout manager)
+    @Override
+    public void onBindViewHolder(ViewHolderBase holder, int rowIndex) {
+        // - get element from your dataset at this position
+        // - replace the contents of the view with that element
+        T rowData = null;
+        try {
+            rowData = getItem(rowIndex);
+        } catch (final IndexOutOfBoundsException e) {
+            Log.w(LOG_TAG, "No row date available for row with index " + rowIndex + ". " +
+                    "Caught Exception: " + e.getMessage());
+        }
+        holder.setBackgroundColor(rowColoriser.getRowColor(rowIndex, rowData));
+
+        //final int widthUnit = holder.getWidthUnit();
+        holder.setmItemClickListener( mItemClickListener);
+
+        for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {
+            View cellView = holder.bindCell(rowData, columnIndex);
+            if (cellView == null) {
+                cellView = new TextView(getContext());
+            }
+
+        }
+
+
+
+    }
+
+    public T getItem(int position){
+        return data.get(position);
+    }
+
+    // Return the size of your dataset (invoked by the layout manager)
+    @Override
+    public int getItemCount() {
+        return data.size();
     }
 
     /**
@@ -108,7 +165,8 @@ public abstract class TableDataAdapter<T> extends ArrayAdapter<T> {
      * @return The {@link Context} of this adapter.
      */
     public Context getContext() {
-        return super.getContext();
+        return context;
+
     }
 
     /**
@@ -142,43 +200,8 @@ public abstract class TableDataAdapter<T> extends ArrayAdapter<T> {
      *         The view to which the returned view will be added.
      * @return The created header view for the given column.
      */
-    public abstract View getCellView(int rowIndex, int columnIndex, ViewGroup parentView);
+    //public abstract View getCellView(int rowIndex, int columnIndex, ViewGroup parentView);
 
-    @Override
-    public View getView(final int rowIndex, final View convertView, final ViewGroup parent) {
-        final LinearLayout rowView = new LinearLayout(getContext());
-
-        final AbsListView.LayoutParams rowLayoutParams = new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        rowView.setLayoutParams(rowLayoutParams);
-        rowView.setGravity(Gravity.CENTER_VERTICAL);
-
-        T rowData = null;
-        try {
-            rowData = getItem(rowIndex);
-        } catch (final IndexOutOfBoundsException e) {
-            Log.w(LOG_TAG, "No row date available for row with index " + rowIndex + ". " +
-                    "Caught Exception: " + e.getMessage());
-        }
-        rowView.setBackgroundColor(rowColoriser.getRowColor(rowIndex, rowData));
-
-        final int widthUnit = (parent.getWidth() / columnModel.getColumnWeightSum());
-
-        for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {
-            View cellView = getCellView(rowIndex, columnIndex, rowView);
-            if (cellView == null) {
-                cellView = new TextView(getContext());
-            }
-
-            final int width = widthUnit * columnModel.getColumnWeight(columnIndex);
-
-            final LinearLayout.LayoutParams cellLayoutParams = new LinearLayout.LayoutParams(width, ViewGroup.LayoutParams.WRAP_CONTENT);
-            cellLayoutParams.weight = columnModel.getColumnWeight(columnIndex);
-            cellView.setLayoutParams(cellLayoutParams);
-            rowView.addView(cellView);
-        }
-
-        return rowView;
-    }
 
     /**
      * Sets the {@link TableDataRowColorizer} that will be used to colorise the table data rows.
@@ -256,6 +279,33 @@ public abstract class TableDataAdapter<T> extends ArrayAdapter<T> {
      */
     protected int getColumnWeightSum() {
         return columnModel.getColumnWeightSum();
+    }
+
+
+    public void add(int position, T item) {
+        data.add(position, item);
+        notifyItemInserted(position);
+    }
+
+    public void remove(T item) {
+        int position = data.indexOf(item);
+        data.remove(position);
+        notifyItemRemoved(position);
+    }
+
+    public OnItemClickListener getItemClickListener() {
+        return mItemClickListener;
+    }
+
+    public void setItemClickListener(OnItemClickListener mItemClickListener) {
+        this.mItemClickListener = mItemClickListener;
+    }
+
+
+    public interface OnItemClickListener
+    {
+        public void onItemClick(View view , int position);
+
     }
 
 }
