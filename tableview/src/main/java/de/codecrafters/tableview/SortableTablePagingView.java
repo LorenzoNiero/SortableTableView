@@ -30,6 +30,14 @@ import de.codecrafters.tableview.providers.SortStateViewProvider;
  */
 public class SortableTablePagingView<T> extends SortableTableView<T> {
 
+    public enum ENUM_MODE_TABLE{
+        INFINITY_LIST,
+        PAGING,
+        ENDLESS_LIST
+
+    }
+
+    protected View mFooterContainer = null;
     protected Button mPrevButton;
     protected Button mNextButton;
     protected TextView pageTextView;
@@ -40,10 +48,12 @@ public class SortableTablePagingView<T> extends SortableTableView<T> {
      */
     private int increment = 0;
 
-    public int TOTAL_LIST_ITEMS = 1030;
-    public int NUM_ITEMS_PAGE   = 5;
+    private int TOTAL_LIST_ITEMS = 0;
+    private int NUM_ITEMS_PAGE   = 5;
 
     List<T> allData ;
+
+    private ENUM_MODE_TABLE mModeTable = ENUM_MODE_TABLE.INFINITY_LIST; //default infinity list
 
 
     public SortableTablePagingView(Context context) {
@@ -56,63 +66,16 @@ public class SortableTablePagingView<T> extends SortableTableView<T> {
 
     public SortableTablePagingView(Context context, AttributeSet attributes, int styleAttributes) {
         super(context, attributes, styleAttributes);
+        mModeTable = ENUM_MODE_TABLE.INFINITY_LIST; //default infinity list
+        initFooter();
 
+    }
 
-        View child = LayoutInflater.from(this.getContext()).inflate( R.layout.paging_footer, null);
-        child.setId(R.id.table_footer_view);
-
-        mPrevButton = (Button) child.findViewById(R.id.prev);
-        mNextButton = (Button) child.findViewById(R.id.next);
-        pageTextView = (TextView) child.findViewById(R.id.pageTextView);
-
-        addView(child);
-
-        //set position
-        RelativeLayout.LayoutParams layoutParamsRelative =
-                (RelativeLayout.LayoutParams)child.getLayoutParams();
-        layoutParamsRelative.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        layoutParamsRelative.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-        layoutParamsRelative.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-        child.setLayoutParams(layoutParamsRelative);
-
-        //position list above footer
-        layoutParamsRelative =
-                (RelativeLayout.LayoutParams)tableDataView.getLayoutParams();
-        layoutParamsRelative.addRule(RelativeLayout.ABOVE, R.id.table_footer_view);
-        tableDataView.setLayoutParams(layoutParamsRelative);
-
-        /**
-         * this block is for checking the number of pages
-         * ====================================================
-         */
-
-        //int val = TOTAL_LIST_ITEMS%NUM_ITEMS_PAGE;
-        //val = val==0?0:1;
-        //pageCount = TOTAL_LIST_ITEMS/NUM_ITEMS_PAGE+val;
-        /**
-         * =====================================================
-         */
-
-        mNextButton.setOnClickListener(new OnClickListener() {
-
-            public void onClick(View v) {
-
-                increment++;
-                loadList(increment);
-                CheckEnable();
-            }
-        });
-
-        mPrevButton.setOnClickListener(new OnClickListener() {
-
-            public void onClick(View v) {
-
-                increment--;
-                loadList(increment);
-                CheckEnable();
-            }
-        });
-
+    /*
+    Set num max item for page. Available only in MODE PAGING
+     */
+    public void setNumItemsPage(int num){
+        NUM_ITEMS_PAGE = num;
     }
 
     /**
@@ -165,23 +128,113 @@ public class SortableTablePagingView<T> extends SortableTableView<T> {
         return allData;
     }
 
-    public void setAllData(List<T> allData) {
-        this.allData = allData;
-        TOTAL_LIST_ITEMS = allData.size();
+    private void setAllData(List<T> allData) {
 
-        //block is for checking the number of pages
-        int val = TOTAL_LIST_ITEMS%NUM_ITEMS_PAGE;
-        val = val==0?0:1;
-        pageCount = TOTAL_LIST_ITEMS/NUM_ITEMS_PAGE+val;
+        if ( mModeTable != ENUM_MODE_TABLE.INFINITY_LIST ) {
+            //block is for checking the number of pages
+            int val = TOTAL_LIST_ITEMS % NUM_ITEMS_PAGE;
+            val = val == 0 ? 0 : 1;
+            pageCount = TOTAL_LIST_ITEMS / NUM_ITEMS_PAGE + val;
 
-        loadList(0);
+            loadList(0);
+        }
+        else if ( mModeTable == ENUM_MODE_TABLE.INFINITY_LIST ){
+           tableDataAdapter.setList(allData);
+        }
     }
 
     @Override
     public void setDataAdapter(final TableDataAdapter<T> dataAdapter) {
         super.setDataAdapter(dataAdapter);
 
-        setAllData(dataAdapter.getData());
+        this.allData = dataAdapter.getData();
+        TOTAL_LIST_ITEMS = allData.size();
+
+        setModeTable(mModeTable);
+
+    }
+
+    public void setModeTable(ENUM_MODE_TABLE mode){
+        mModeTable = mode;
+
+        switch (mode) {
+            case INFINITY_LIST:
+                initFooter();
+                break;
+            case PAGING:
+                initFooter();
+                //setAllData(allData);
+                break;
+            case ENDLESS_LIST:
+                throw new RuntimeException("ENDLESS_LIST not implementation");
+                //break;
+
+        }
+
+        if(allData != null){
+            setAllData(allData);
+        }
+
+    }
+
+    private void initFooter(){
+
+        if (mModeTable!=ENUM_MODE_TABLE.INFINITY_LIST && mFooterContainer == null) {
+            mFooterContainer = LayoutInflater.from(this.getContext()).inflate(R.layout.paging_footer, null);
+            mFooterContainer.setId(R.id.table_footer_view);
+
+            mPrevButton = (Button) mFooterContainer.findViewById(R.id.prev);
+            mNextButton = (Button) mFooterContainer.findViewById(R.id.next);
+            pageTextView = (TextView) mFooterContainer.findViewById(R.id.pageTextView);
+
+            addView(mFooterContainer);
+
+            //set position
+            LayoutParams layoutParamsRelative =
+                    (LayoutParams) mFooterContainer.getLayoutParams();
+            layoutParamsRelative.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+            layoutParamsRelative.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            layoutParamsRelative.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            mFooterContainer.setLayoutParams(layoutParamsRelative);
+
+            //position list above footer
+            layoutParamsRelative =
+                    (LayoutParams) tableDataView.getLayoutParams();
+            layoutParamsRelative.addRule(RelativeLayout.ABOVE, R.id.table_footer_view);
+            tableDataView.setLayoutParams(layoutParamsRelative);
+
+            mNextButton.setOnClickListener(new OnClickListener() {
+
+                public void onClick(View v) {
+
+                    increment++;
+                    loadList(increment);
+                    CheckEnable();
+                }
+            });
+
+            mPrevButton.setOnClickListener(new OnClickListener() {
+
+                public void onClick(View v) {
+
+                    increment--;
+                    loadList(increment);
+                    CheckEnable();
+                }
+            });
+
+        }
+
+        switch (mModeTable) {
+            case PAGING:
+                mFooterContainer.setVisibility(VISIBLE);
+                break;
+            case INFINITY_LIST:
+                if (mFooterContainer != null) {
+                    mFooterContainer.setVisibility(GONE);
+                }
+                break;
+        }
     }
 
 }
